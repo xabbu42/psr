@@ -32,7 +32,11 @@ my %config = (
 	'google|g' => {
 		url => 'http://www.google.com/search',
 		params => {'q' => '$query', num => '$numresults'},
-		results => scraper {process 'p > a', '[]' => sub {URI->new($_[0]->attr('href'))->query_param('q')}},
+		results => scraper {process 'p > a', '[]' => sub {
+			my $url = $_[0]->attr('href');
+			my $q = URI->new($url)->query_param('q');
+			return $q =~ m[^http://] ? $q : undef;
+		}},
 	},
 	'man|m' => {
 		url => 'http://localhost/cgi-bin/man/man2html',
@@ -110,6 +114,6 @@ sub get_results {
 	my $html < io($url)->ua(agent => 'Mozilla/4.0');
 	my $res = $mconf->{results}->scrape($html, $url);
 	return $url unless $res->{''};
-	return $num ? @{$res->{''}}[0..($num-1)] : @{$res->{''}}
+	return grep {$_} ($num ? @{$res->{''}}[0..($num-1)] : @{$res->{''}});
 }
 
