@@ -1,0 +1,115 @@
+#!/usr/bin/env perl
+
+=head1 NAME
+
+psr - perl surfraw
+
+=head1 SYNOPSIS
+
+psr [options] [provider] [query]
+
+  Options:
+    --help|-h            brief help message
+    --man                full documentation
+    --first|-f           follow first result
+    --url|-u             print url instead of opening browser
+    --num|-n             number of results to get
+    --list|-l            list results
+    --providers|-p       list known search providers
+
+=head1 DESCRIPTION
+
+B<This program> is a perl replacement of surfraw.
+
+=cut
+
+use Web::Scraper;
+
+my %config = (
+	'google|g' => {
+		url => 'http://www.google.com/search',
+		params => {'q' => '$query', num => '$numresults'},
+		results => scraper {process 'p > a', '[]' => '@href'},
+	},
+	'man|m' => {
+		url => 'http://localhost/cgi-bin/man/man2html',
+		params => {query => '$query'},
+		results => scraper {process 'ul > li > a', '[]' => '@href'},
+	},
+	'cpan|c' => {
+		url => 'http://search.cpan.org/search?mode=all&query=$query',
+		params => {query => '$query', pagesize => '$numresults'},
+		results => scraper {process 'h2 > a', '[]' => '@href'},
+	},
+	'dwww|d' => {
+		url => 'http://localhost/cgi-bin/dwww',
+		params => {search => '$query'},
+		results => scraper {process 'table.wide > tr > td > a', '[]' => '@href'}
+	},
+	);
+
+use strict;
+use warnings;
+
+use 5.010;
+
+use Getopt::Long;
+use Pod::Usage;
+use IO::All;
+use YAML qw/Dump/;
+use URI;
+use List::Util qw/first/;
+use common::sense;
+
+my %opts;
+GetOptions(\%opts, 'help|h', 'man', 'first|f', 'url|u', 'list|l', 'num|n=i', 'providers|p')
+	or pod2usage(2);
+pod2usage(1) if $opts{help};
+pod2usage(-exitstatus => 0, -verbose => 2) if $opts{man};
+
+if ($opts{providers}) {
+	say sprintf("%-10s", $_), $config{$_}{url} foreach keys %config;
+	exit(0);
+}
+
+my $method = shift;
+my $query = shift;
+my $mconf = $config{ first { ($method =~ /^($_)$/) } keys %config };
+die "Unknown method '$method'" unless $mconf;
+die "No query given" unless $query;
+my $url = make_url($mconf, \%opts);
+if ($opts{list}) {
+	say $_ foreach get_results($mconf, $url, $opts{num});
+} else {
+	($url) = get_results($mconf, $url, $opts{num})
+		if ($opts{first}); 
+	if ($opts{url}) {
+		say $url;
+	} else {
+		warn $url;
+		system('browser', $url);
+	}
+}
+
+sub make_url { 
+	my ($mconf, $opts) = @_;
+	my $url = URI->new($mconf->{url});
+	my $numresults = $opts->{num};
+	my %params;
+	foreach my $key (keys %{$mconf->{params}}) {
+		no warnings 'uninitialized';
+		my $val = eval '"' . $mconf->{params}{$key} . '"';
+		$params{$key} = $val if $val;
+	}
+	$url->query_form(\%params);
+	return $url;
+}
+
+sub get_results {
+	my ($mconf, $url, $num) = @_;
+	my $html < io($url)->ua(agent => 'Mozilla/4.0');
+	my $res = $mconf->{results}->scrape($html, $url);
+	return $url unless $res->{''};
+	return $num ? @{$res->{''}}[0..($num-1)] : @{$res->{''}}
+}
+
