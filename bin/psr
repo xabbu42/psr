@@ -73,7 +73,7 @@ if ($opts{providers}) {
 }
 
 my $method = shift;
-my $query = shift;
+my $query = join ' ', @ARGV;
 my $mconf = $config{ first { ($method =~ /^($_)$/) } keys %config };
 die "Unknown method '$method'" unless $mconf;
 die "No query given" unless $query;
