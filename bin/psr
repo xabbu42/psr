@@ -10,12 +10,12 @@ psr [options] [provider] [query]
 
 =head1 OPTIONS
 
- --help|-h            brief help message
- --first|-f           follow first result
- --url|-u             print url instead of opening browser
- --num|-n             number of results to get
- --list|-l            list results
- --providers|-p       list known search providers
+ -h, --help            brief help message
+ -f, --first, --lucky  follow first result
+ -u, --url             print url instead of opening browser
+ -n, --num=NUM         number of results to get
+ -l, --list            list results
+ -p, --providers       list known search providers
 
 =head1 DESCRIPTION
 
@@ -67,7 +67,7 @@ use List::Util qw/first/;
 
 my %opts;
 Getopt::Long::Configure('gnu_getopt');
-GetOptions(\%opts, 'help|h', 'first|f', 'url|u', 'list|l', 'num|n=i', 'providers|p')
+GetOptions(\%opts, 'help|h', 'first|lucky|f', 'url|u', 'list|l', 'num|n=i', 'providers|p')
 	or pod2usage(2);
 pod2usage(1) if $opts{help};
 
