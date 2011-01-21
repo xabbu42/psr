@@ -66,6 +66,7 @@ use IO::All::LWP;
 use List::Util qw/first/;
 
 my %opts;
+Getopt::Long::Configure('gnu_getopt');
 GetOptions(\%opts, 'help|h', 'first|f', 'url|u', 'list|l', 'num|n=i', 'providers|p')
 	or pod2usage(2);
 pod2usage(1) if $opts{help};
