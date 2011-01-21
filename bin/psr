@@ -8,14 +8,14 @@ psr - perl surfraw
 
 psr [options] [provider] [query]
 
-  Options:
-    --help|-h            brief help message
-    --man                full documentation
-    --first|-f           follow first result
-    --url|-u             print url instead of opening browser
-    --num|-n             number of results to get
-    --list|-l            list results
-    --providers|-p       list known search providers
+=head1 OPTIONS
+
+ --help|-h            brief help message
+ --first|-f           follow first result
+ --url|-u             print url instead of opening browser
+ --num|-n             number of results to get
+ --list|-l            list results
+ --providers|-p       list known search providers
 
 =head1 DESCRIPTION
 
@@ -65,10 +65,9 @@ use IO::All;
 use List::Util qw/first/;
 
 my %opts;
-GetOptions(\%opts, 'help|h', 'man', 'first|f', 'url|u', 'list|l', 'num|n=i', 'providers|p')
+GetOptions(\%opts, 'help|h', 'first|f', 'url|u', 'list|l', 'num|n=i', 'providers|p')
 	or pod2usage(2);
 pod2usage(1) if $opts{help};
-pod2usage(-exitstatus => 0, -verbose => 2) if $opts{man};
 
 if ($opts{providers}) {
 	say sprintf("%-10s", $_), $config{$_}{url} foreach keys %config;
