@@ -62,6 +62,7 @@ use 5.010;
 use Getopt::Long;
 use Pod::Usage;
 use IO::All;
+use IO::All::LWP;
 use List::Util qw/first/;
 
 my %opts;
