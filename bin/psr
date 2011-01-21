@@ -24,7 +24,6 @@ B<This program> is a perl replacement of surfraw.
 =cut
 
 use Web::Scraper;
-use YAML qw/Dump/;
 use URI;
 use URI::QueryParam;
 
@@ -64,7 +63,6 @@ use Getopt::Long;
 use Pod::Usage;
 use IO::All;
 use List::Util qw/first/;
-use common::sense;
 
 my %opts;
 GetOptions(\%opts, 'help|h', 'man', 'first|f', 'url|u', 'list|l', 'num|n=i', 'providers|p')
