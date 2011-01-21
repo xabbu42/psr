@@ -10,7 +10,7 @@ Installation
 
 psr is easiest to install with [cpanminus](http://search.cpan.org/~miyagawa/App-cpanminus-1.1006/lib/App/cpanminus.pm):
 
-    cpanm https://github.com/downloads/xabbu42/psr/App-psr-0.1.tar.gz
+    cpanm --no-lwp --no-wget https://github.com/downloads/xabbu42/psr/App-psr-0.1.tar.gz
 
 If you want to install psr manually you can use the following commands:
 
