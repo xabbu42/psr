@@ -25,7 +25,7 @@ If you want to install psr manually you can use the following commands:
 Usage
 -----
 
-See `psr -h` and `man psr` for a complete usage. Some examples:
+See `psr -h` and `man psr` for complete documentation. Some examples:
 
     $ psr -l google test
     http://www.test.com/
@@ -50,8 +50,6 @@ Todos and Ideas
 ---------------
 
 - Add support for a config file, especially to configure the browser command and to add new searches.
-
-- The browser command is currently hardcoded to `browser`, which probably only exists in my home. This should be replaced by a more general and portable working list of possible binaries.
 
 - Get more use out of [Web::Scraper](http://search.cpan.org/~miyagawa/Web-Scraper/lib/Web/Scraper.pm) and the scraping code coming with searches. 
 
