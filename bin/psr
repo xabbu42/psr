@@ -21,7 +21,7 @@ psr [options] [provider] [query]
 =head1 DESCRIPTION
 
 B<This program> is a perl replacement of surfraw. It generates search
-urls and opens the url in a browser. Optionally you can list the
+urls and opens the url in a browser. You can optionally list the
 results in your terminal or open the first result directly. 
 
 psr tries to use the default browser on most systems. You can
