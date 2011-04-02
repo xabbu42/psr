@@ -11,10 +11,12 @@ psr [options] [provider] [query]
 =head1 OPTIONS
 
  -h, --help            brief help message
- -f, --first, --lucky  follow first result
- -u, --url             print url instead of opening browser
+ -f, --first, --lucky  open first result (same as --open 1)
+ -a, --all             open all results (same as --open 1-)
+ -o, --open=RANGES     open this results (example "1-4,5,9-")
+ -u, --url             print url(s) instead of opening browser
  -n, --num=NUM         number of results to get
- -l, --list            list results
+ -l, --list            list results (same as --all --url)
  -p, --providers       list known search providers
  --browser=CMD         use CMD to open a new browser
 
@@ -70,15 +72,15 @@ use Getopt::Long;
 use Pod::Usage;
 use IO::All;
 use IO::All::LWP;
-use List::Util qw/first/;
-use Browser::Open qw/open_browser/;
+use List::Util qw/first max/;
+use Browser::Open qw/open_browser open_browser_cmd/;
 
 my %opts;
 Getopt::Long::Configure('gnu_getopt');
 GetOptions(
 	\%opts,
 	'help|h', 'first|lucky|f', 'url|u', 'list|l', 'num|n=i',
-	'providers|p', 'browser=s',
+	'providers|p', 'browser=s', 'all|a', "open|o:s",
 	) or pod2usage(2);
 pod2usage(1) if $opts{help};
 
@@ -87,24 +89,58 @@ if ($opts{providers}) {
 	exit(0);
 }
 
+if ($opts{list}) {
+	$opts{url} = 1;
+	$opts{open} = $opts{open} || "1-";
+	delete $opts{list};
+}
+
+if ($opts{all}) {
+	$opts{open} = "1-";
+} elsif ($opts{first}) {
+	$opts{open} = "1";
+}
+delete $opts{$_} foreach qw/list all first/;
+
+if (!$opts{num}) {
+	if ($opts{open} && $opts{open} !~ /-$|-,/) {
+		my @nums = ($opts{open} =~ /(\d+)/g);
+		$opts{num} = max @nums;
+	} else {
+		$opts{num} = 10;
+	}
+}
+
 my $method = shift;
 my $query = join ' ', @ARGV;
 my $mconf = $config{ first { ($method =~ /^($_)$/) } keys %config };
 die "Unknown method '$method'" unless $mconf;
 die "No query given" unless $query;
-my $url = make_url($mconf, \%opts);
-if ($opts{list}) {
-	say $_ foreach get_results($mconf, $url, $opts{num});
-} else {
-	($url) = get_results($mconf, $url, $opts{num})
-		if ($opts{first}); 
-	if ($opts{url}) {
-		say $url;
-	} elsif ($opts{browser}) {
-		system($opts{browser} . ' ' . $url);
-	} else {
-		open_browser($url);
+
+my @urls = make_url($mconf, \%opts);
+if (defined $opts{open}) {
+	my @all = get_results($mconf, $urls[0], $opts{num});
+	@urls = ();
+	my $total = scalar @all;
+	foreach (split ",", $opts{open}) {
+		if (/(\d*)-(\d*)/) {
+			my $first = ($1 || 1) - 1;
+			my $last  = ($2 || $total) - 1;
+			push @urls, @all[$first..$last];
+		} elsif(/(\d+)/) {
+			push @urls, $all[$1-1];
+		} else {
+			die "Illegal range '$_'";
+		}
 	}
+	@urls = grep {$_} @urls;
+}
+
+if ($opts{url}) {
+	say $_ foreach @urls;
+} else {
+	my $cmd = $opts{browser} || open_browser_cmd();
+	system($cmd, @urls);
 }
 
 sub make_url { 
@@ -126,6 +162,8 @@ sub get_results {
 	my $html < io($url)->ua(agent => 'Mozilla/4.0');
 	my $res = $mconf->{results}->scrape($html, $url);
 	return $url unless $res->{''};
-	return grep {$_} ($num ? @{$res->{''}}[0..($num-1)] : @{$res->{''}});
+	my @defined = grep {$_} @{$res->{''}};
+	warn "Not enough results!" if @defined < $num;
+	return $num ? @defined[0..($num-1)] : @defined;
 }
 
