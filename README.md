@@ -39,12 +39,14 @@ See `psr -h` and `man psr` for complete documentation. Some examples:
     http://acid3.acidtests.org/
     http://www.testing.com/
 
-    $ psr -f google test #opens http://www.test.com in a browser
+    $ psr -f google test                        #opens http://www.test.com in a browser
+
+	$ psr google test -o 2-3,5                  #opens the given urls in a browser
 
 	$ psr -n 30 -u google test
     http://www.google.com/search?num=30&q=test
 
-	$ psr -n 30 google test #opens http://www.google.com/search?num=30&q=test in a browser
+	$ psr -n 30 google test                     #opens http://www.google.com/search?num=30&q=test in a browser
 
 Todos and Ideas
 ---------------
@@ -53,9 +55,7 @@ Todos and Ideas
 
 - Get more use out of [Web::Scraper](http://search.cpan.org/~miyagawa/Web-Scraper/lib/Web/Scraper.pm) and the scraping code coming with searches. 
 
-  - Generalize --first to --follow NUM
   - Add title and/or descriptions of search results to output.
-  - Open all results in tabs in one browser window
   - etc.
 
 - Allow using stdin and POST method to support pastbins or github markdown preview.
