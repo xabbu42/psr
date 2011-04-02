@@ -19,6 +19,8 @@ psr [options] [provider] [query]
  -l, --list            list results (same as --all --url)
  -p, --providers       list known search providers
  --browser=CMD         use CMD to open a new browser
+ -t, --tabs            open all urls with one browser command 
+ -w, --windows         open each url with seperate browser command
 
 =head1 DESCRIPTION
 
@@ -73,16 +75,19 @@ use Pod::Usage;
 use IO::All;
 use IO::All::LWP;
 use List::Util qw/first max/;
-use Browser::Open qw/open_browser open_browser_cmd/;
+use Browser::Open qw/open_browser_cmd/;
 
 my %opts;
+%opts = ('windows' => 0, 'tabs' => sub {$opts{windows} = 0});
 Getopt::Long::Configure('gnu_getopt');
 GetOptions(
 	\%opts,
 	'help|h', 'first|lucky|f', 'url|u', 'list|l', 'num|n=i',
 	'providers|p', 'browser=s', 'all|a', "open|o:s",
+	'windows|window|w', 'tabs|tab|t',
 	) or pod2usage(2);
 pod2usage(1) if $opts{help};
+delete $opts{tabs};
 
 if ($opts{providers}) {
 	say sprintf("%-10s", $_), $config{$_}{url} foreach keys %config;
@@ -140,7 +145,11 @@ if ($opts{url}) {
 	say $_ foreach @urls;
 } else {
 	my $cmd = $opts{browser} || open_browser_cmd();
-	system($cmd, @urls);
+	if ($opts{windows}) {
+		system($cmd, $_) foreach @urls;
+	} else {
+		system($cmd, @urls);
+	}
 }
 
 sub make_url { 
