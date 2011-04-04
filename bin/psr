@@ -20,6 +20,7 @@ psr [options] [provider] [query]
   --browser=CMD         use CMD to open a new browser
   -t, --tabs            open all urls with one browser command 
   -w, --windows         open each url with seperate browser command
+  -d, --dump            dump page to stdout
 
 =head1 DESCRIPTION
 
@@ -83,7 +84,7 @@ GetOptions(
 	\%opts,
 	'help|h', 'first|lucky|f', 'url|u', 'list|l', 'num|n=i',
 	'providers|p', 'browser=s', 'all|a', "open|o:s",
-	'windows|window|w', 'tabs|tab|t',
+	'windows|window|w', 'tabs|tab|t', 'dump|d',
 	) or pod2usage(2);
 pod2usage(1) if $opts{help};
 delete $opts{tabs};
@@ -122,32 +123,37 @@ die "Unknown method '$method'" unless $mconf;
 die "No query given" unless $query;
 
 my @urls = make_url($mconf, \%opts);
-if (defined $opts{open}) {
-	my @all = get_results($mconf, $urls[0], $opts{num});
-	@urls = ();
-	my $total = scalar @all;
-	foreach (split ",", $opts{open}) {
-		if (/(\d*)-(\d*)/) {
-			my $first = ($1 || 1) - 1;
-			my $last  = ($2 || $total) - 1;
-			push @urls, @all[$first..$last];
-		} elsif(/(\d+)/) {
-			push @urls, $all[$1-1];
-		} else {
-			die "Illegal range '$_'";
-		}
-	}
-	@urls = grep {$_} @urls;
-}
-
-if ($opts{url}) {
-	say $_ foreach @urls;
+if (defined $opts{dump}) {
+	my $html = get_page($urls[0]);
+	print $html;
 } else {
-	my $cmd = $opts{browser} || open_browser_cmd();
-	if ($opts{windows}) {
-		system($cmd, $_) foreach @urls;
+	if (defined $opts{open}) {
+		my @all = scrape_page($mconf, $urls[0], get_page($urls[0]), $opts{num});
+		@urls = ();
+		my $total = scalar @all;
+		foreach (split ",", $opts{open}) {
+			if (/(\d*)-(\d*)/) {
+				my $first = ($1 || 1) - 1;
+				my $last  = ($2 || $total) - 1;
+				push @urls, @all[$first..$last];
+			} elsif(/(\d+)/) {
+				push @urls, $all[$1-1];
+			} else {
+				die "Illegal range '$_'";
+			}
+		}
+		@urls = grep {$_} @urls;
+	}
+
+	if ($opts{url}) {
+		say $_ foreach @urls;
 	} else {
-		system($cmd, @urls);
+		my $cmd = $opts{browser} || open_browser_cmd();
+		if ($opts{windows}) {
+			system($cmd, $_) foreach @urls;
+		} else {
+			system($cmd, @urls);
+		}
 	}
 }
 
@@ -165,9 +171,14 @@ sub make_url {
 	return $url;
 }
 
-sub get_results {
-	my ($mconf, $url, $num) = @_;
+sub get_page {
+	my ($url) = @_;
 	my $html < io($url)->ua(agent => 'Mozilla/4.0');
+	return $html;
+}
+
+sub scrape_page {
+	my ($mconf, $url, $html, $num) = @_;
 	my $res = $mconf->{results}->scrape($html, $url);
 	return $url unless $res->{''};
 	my @defined = grep {$_} @{$res->{''}};
