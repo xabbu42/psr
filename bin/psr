@@ -21,6 +21,7 @@ psr [options] [provider] [query]
   -t, --tabs            open all urls with one browser command 
   -w, --windows         open each url with seperate browser command
   -d, --dump            dump page to stdout
+  -r, --read=FILE       read web page from FILE instead of web
 
 =head1 DESCRIPTION
 
@@ -84,7 +85,7 @@ GetOptions(
 	\%opts,
 	'help|h', 'first|lucky|f', 'url|u', 'list|l', 'num|n=i',
 	'providers|p', 'browser=s', 'all|a', "open|o:s",
-	'windows|window|w', 'tabs|tab|t', 'dump|d',
+	'windows|window|w', 'tabs|tab|t', 'dump|d', 'read|r:s',
 	) or pod2usage(2);
 pod2usage(1) if $opts{help};
 delete $opts{tabs};
@@ -120,15 +121,15 @@ my $method = shift;
 my $query = join ' ', @ARGV;
 my $mconf = $config{ first { ($method =~ /^($_)$/) } keys %config };
 die "Unknown method '$method'" unless $mconf;
-die "No query given" unless $query;
 
 my @urls = make_url($mconf, \%opts);
 if (defined $opts{dump}) {
-	my $html = get_page($urls[0]);
+	my $html = get_page($urls[0], \%opts);
 	print $html;
 } else {
 	if (defined $opts{open}) {
-		my @all = scrape_page($mconf, $urls[0], get_page($urls[0]), $opts{num});
+		my $html = get_page($urls[0], \%opts);
+		my @all = scrape_page($mconf, $urls[0], $html, $opts{num});
 		@urls = ();
 		my $total = scalar @all;
 		foreach (split ",", $opts{open}) {
@@ -172,8 +173,13 @@ sub make_url {
 }
 
 sub get_page {
-	my ($url) = @_;
-	my $html < io($url)->ua(agent => 'Mozilla/4.0');
+	my ($url, $opts) = @_;
+	my $html;
+	if (defined $opts->{read}) {
+		$html < io($opts->{read} || '-');
+	} else {
+		$html < io($url)->ua(agent => 'Mozilla/4.0');
+	}
 	return $html;
 }
 
