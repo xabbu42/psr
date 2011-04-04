@@ -8,19 +8,18 @@ psr - perl surfraw
 
 psr [options] [provider] [query]
 
-=head1 OPTIONS
-
- -h, --help            brief help message
- -f, --first, --lucky  open first result (same as --open 1)
- -a, --all             open all results (same as --open 1-)
- -o, --open=RANGES     open this results (example "1-4,5,9-")
- -u, --url             print url(s) instead of opening browser
- -n, --num=NUM         number of results to get
- -l, --list            list results (same as --all --url)
- -p, --providers       list known search providers
- --browser=CMD         use CMD to open a new browser
- -t, --tabs            open all urls with one browser command 
- -w, --windows         open each url with seperate browser command
+ Options:
+  -h, --help            brief help message
+  -f, --first, --lucky  open first result (same as --open 1)
+  -a, --all             open all results (same as --open 1-)
+  -o, --open=RANGES     open this results (example "1-4,5,9-")
+  -u, --url             print url(s) instead of opening browser
+  -n, --num=NUM         number of results to get
+  -l, --list            list results (same as --all --url)
+  -p, --providers       list known search providers
+  --browser=CMD         use CMD to open a new browser
+  -t, --tabs            open all urls with one browser command 
+  -w, --windows         open each url with seperate browser command
 
 =head1 DESCRIPTION
 
