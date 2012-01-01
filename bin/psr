@@ -40,6 +40,17 @@ use URI;
 use URI::QueryParam;
 
 my %config = (
+	'pastebin|pb' => {
+		url     => 'http://pastebin.com/post.php',
+		post    => 'paste_code',
+		params  => {
+			submit_hidden => 'submit_hidden',
+			paste_format  => 1,
+			paste_expire_date => 'N',
+			paste_private => 0,
+			paste_name => '',
+		},
+	},
 	'google|g' => {
 		url => 'http://www.google.com/search',
 		params => {'q' => '$query', num => '$numresults'},
@@ -123,6 +134,12 @@ my $mconf = $config{ first { ($method =~ /^($_)$/) } keys %config };
 die "Unknown method '$method'" unless $mconf;
 
 my @urls = make_url($mconf, \%opts);
+
+if ($mconf->{post}) {
+	my $post < io($opts{post} || '-');
+	@urls = post($mconf, $urls[0], $post);
+}
+
 if (defined $opts{dump}) {
 	my $html = get_page($urls[0], \%opts);
 	print $html;
@@ -181,6 +198,21 @@ sub get_page {
 		$html < io($url)->ua(agent => 'Mozilla/4.0');
 	}
 	return $html;
+}
+
+sub post {
+	my ($mconf, $url, $post) = @_;
+	my $ua = LWP::UserAgent->new;
+	$ua->agent('Mozilla/4.0');
+	my $res = $ua->post(
+		$url,
+		Content => {%{$mconf->{params}}, $mconf->{post} => $post},
+		Content_Type => 'multipart/form-data',
+		);
+	if ($res->is_redirect) {
+		$url = URI->new_abs($res->header('Location'), $url)->as_string;
+	}
+	return $url;
 }
 
 sub scrape_page {
