@@ -88,7 +88,7 @@ psr tries to use the default browser on most systems. You can
 overwrite the used browser command by setting the environment variable
 BROWSER or by giving an explicit browser argument.
 
-=head1 PROVIDER CONFIGS
+=head1 CONFIG FILES
 
 Additional providers can be configured in the config file ~/.psrrc or
 in one file per provider in the directory ~/.psr. All of this files
@@ -96,6 +96,12 @@ are in the L<YAML|http://yaml.org> format.  ~/.psrrc should contain a
 YAML hash with one hash value per additional provider under the
 provider name as key. The files in ~/.psr should contain a YAML hash
 with the additional provider.
+
+The key C<config> is reserved to override commandline option
+defaults. So all the values in ~/.psr/config and under the C<config>
+key in ~/.psrrc override defaults for commandline options. Only the
+long forms without the C<--> of the commandline options are recognized
+as keys.
 
 A provider config hash can contain the following keys:
 
@@ -212,6 +218,7 @@ if (-e $opts{config}) {
 			if $userconfig->{$key}->{results};
 	}
 	%config = %{ merge($userconfig, \%config) };
+	%opts = (%opts, %{$config{config}}) if ($config{config});
 }
 
 if (-d $opts{configdir}) {
@@ -220,7 +227,11 @@ if (-d $opts{configdir}) {
 		my $key  = delete $conf->{key} || $file->filename;
 		$conf->{results} = eval $conf->{results}
 			if $conf->{results};
-		$config{$key} = $conf;
+		if ($key eq 'config') {
+			%opts = (%opts, %$conf);
+		} else {
+			$config{$key} = $conf;
+		}
 	}
 }
 
