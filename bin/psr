@@ -64,6 +64,10 @@ open each url with seperate browser command
 
 dump page to stdout
 
+=item C<-F, --file=FILE>
+
+take query from FILE instead of command line
+
 =item C<-r, --read=FILE>
 
 read web page from FILE instead of web
@@ -117,6 +121,11 @@ The parameters to add to the search url. The parameter values are perl
 strings and the variables $query and $numresults can be used to get
 the query and the number of results.
 
+=item method
+
+The http method to use for the request. The default is C<get> but
+C<post> is also supported.
+
 =item results
 
 Some perl code to generate a L<Web::Scraper> object to scrape the
@@ -157,13 +166,14 @@ use URI::QueryParam;
 my %config = (
 	'pastebin|pb' => {
 		url     => 'http://pastebin.com/post.php',
-		post    => 'paste_code',
+		method  => 'post',
 		params  => {
 			submit_hidden => 'submit_hidden',
 			paste_format  => 1,
 			paste_expire_date => 'N',
 			paste_private => 0,
 			paste_name => '',
+			paste_code => '$query',
 		},
 	},
 	'google|g' => {
@@ -218,7 +228,7 @@ GetOptions(
 	\%opts,
 	'help|h', 'first|lucky|f', 'url|u', 'list|l', 'num|n=i',
 	'providers|p', 'browser=s', 'all|a', "open|o:s",
-	'windows|window|w', 'tabs|tab|t', 'dump|d', 'read|r:s',
+	'windows|window|w', 'tabs|tab|t', 'dump|d', 'file|F=s', 'read|r:s',
 	'config|c', 'configdir', 'man',
 	) or pod2usage(2);
 pod2usage(1) if $opts{help};
@@ -277,16 +287,11 @@ if (!$opts{num}) {
 }
 
 my $method = shift;
-my $query = join ' ', @ARGV;
+my $query = join(' ', @ARGV) || io($opts{file} || '-')->slurp;
 my $mconf = $config{ first { ($method =~ /^($_)$/) } keys %config };
 die "Unknown method '$method'" unless $mconf;
 
 my @urls = make_url($mconf, $query, \%opts);
-
-if ($mconf->{post}) {
-	my $post < io($opts{post} || '-');
-	@urls = post($mconf, $urls[0], $post);
-}
 
 if (defined $opts{dump}) {
 	my $html = get_page($urls[0], \%opts);
@@ -326,6 +331,8 @@ if (defined $opts{dump}) {
 sub make_url { 
 	my ($mconf, $query, $opts) = @_;
 	my $url = URI->new($mconf->{url});
+
+	#generate hash of parameter strings
 	my $numresults = $opts->{num};
 	my %params;
 	foreach my $key (keys %{$mconf->{params}}) {
@@ -333,7 +340,21 @@ sub make_url {
 		my $val = eval '"' . $mconf->{params}{$key} . '"';
 		$params{$key} = $val if $val;
 	}
-	$url->query_form(\%params);
+
+	if (($mconf->{method} || "") eq 'post') {
+		my $ua = LWP::UserAgent->new;
+		$ua->agent('Mozilla/4.0');
+		my $res = $ua->post(
+			$url,
+			Content => \%params,
+			Content_Type => 'multipart/form-data',
+			);
+		$url = URI->new_abs($res->header('Location'), $url)->as_string
+			if $res->is_redirect;
+	} else {
+		$url->query_form(\%params);
+	}
+
 	return $url;
 }
 
@@ -346,21 +367,6 @@ sub get_page {
 		$html < io($url)->ua(agent => 'Mozilla/4.0');
 	}
 	return $html;
-}
-
-sub post {
-	my ($mconf, $url, $post) = @_;
-	my $ua = LWP::UserAgent->new;
-	$ua->agent('Mozilla/4.0');
-	my $res = $ua->post(
-		$url,
-		Content => {%{$mconf->{params}}, $mconf->{post} => $post},
-		Content_Type => 'multipart/form-data',
-		);
-	if ($res->is_redirect) {
-		$url = URI->new_abs($res->header('Location'), $url)->as_string;
-	}
-	return $url;
 }
 
 sub scrape_page {
