@@ -120,7 +120,8 @@ the query and the number of results.
 =item results
 
 Some perl code to generate a L<Web::Scraper> object to scrape the
-results from the returned html page.
+results from the returned html page. The scraper should return a list
+of urls, one url for each search result.
 
 =item key (only in ~/.psr)
 
@@ -129,6 +130,19 @@ a regular expression like C<google|g> if different arguments
 should match this provider. 
 
 =back
+
+As example, the following is the YAML configuration for the included
+google search configuration:
+
+  key:     google|g
+  url:     http://www.google.com/search
+  params:  {q: $query, num: $numresults},
+  results: >
+      scraper {process 'p > a', '[]' => sub {
+          my $url = $_[0]->attr('href');
+          my $q = URI->new($url)->query_param('q');
+          return $q =~ m[^http://] ? $q : undef;
+      }},
 
 =head1 AUTHOR
 
