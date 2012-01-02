@@ -9,29 +9,72 @@ psr - perl surfraw
 psr [options] [provider] [query]
 
  Options:
-  -h, --help            brief help message
+  -h, --help            show brief help message
+  --man                 show complete man page
   -f, --first, --lucky  open first result (same as --open 1)
   -a, --all             open all results (same as --open 1-)
   -o, --open=RANGES     open this results (example "1-4,5,9-")
   -u, --url             print url(s) instead of opening browser
   -n, --num=NUM         number of results to get
   -l, --list            list results (same as --all --url)
-  -p, --providers       list known search providers
+  -p, --providers       list known providers
   --browser=CMD         use CMD to open a new browser
   -t, --tabs            open all urls with one browser command 
   -w, --windows         open each url with seperate browser command
   -d, --dump            dump page to stdout
   -r, --read=FILE       read web page from FILE instead of web
+  -c, --config=FILE     read config file FILE with more search providers [~/.psrrc]
+  --configdir=DIR       read config files in directory DIR with more search providers [~/.psr]
 
 =head1 DESCRIPTION
 
 B<This program> is a perl replacement of surfraw. It generates search
 urls and opens the url in a browser. You can optionally list the
-results in your terminal or open the first result directly. 
+results in your terminal or open the first result directly.
 
 psr tries to use the default browser on most systems. You can
 overwrite the used browser command by setting the environment variable
 BROWSER or by giving an explicit browser argument.
+
+=head1 PROVIDER CONFIGS
+
+Additional providers can be configured in the config file ~/.psrrc or
+in one file per provider in the directory ~/.psr. All of this files
+are in the L<YAML|http://yaml.org> format.  ~/.psrrc should contain a
+YAML hash with one hash value per additional provider under the
+provider name as key. The files in ~/.psr should contain a YAML hash
+with the additional provider.
+
+A search provider config hash can contain the following keys:
+
+=over 4
+
+=item url
+
+The base url for the search.
+
+=item params
+
+The parameters to add to the search url. The parameter values are perl
+strings and the variables $query and $numresults can be used to get
+the query and the number of results.
+
+=item results
+
+This is a bit of perl code to generate a L<Web::Scraper> object to
+scrape the results from the returned html page.
+
+=item key (only in ~/.psr)
+
+The key of the provider (the filename is used as default). This can be
+a regular expression like C<google|g> if different arguments
+should match this provider. 
+
+=back
+
+=head1 AUTHOR
+
+Nathan Gass <gass@search.ch>
 
 =cut
 
@@ -88,18 +131,46 @@ use IO::All;
 use IO::All::LWP;
 use List::Util qw/first max/;
 use Browser::Open qw/open_browser_cmd/;
+use YAML::XS qw/LoadFile Dump/;
+use Hash::Merge qw/merge/;
 
 my %opts;
-%opts = ('windows' => 0, 'tabs' => sub {$opts{windows} = 0});
+%opts = (
+	'windows'   => 0,
+	'tabs'      => sub {$opts{windows} = 0},
+	'config'    => glob('~/.psrrc'),
+	'configdir' => glob('~/.psr'),
+);
 Getopt::Long::Configure('gnu_getopt');
 GetOptions(
 	\%opts,
 	'help|h', 'first|lucky|f', 'url|u', 'list|l', 'num|n=i',
 	'providers|p', 'browser=s', 'all|a', "open|o:s",
 	'windows|window|w', 'tabs|tab|t', 'dump|d', 'read|r:s',
+	'config|c', 'configdir', 'man',
 	) or pod2usage(2);
 pod2usage(1) if $opts{help};
+pod2usage(-verbose => 2, -exitval => 0) if ($opts{man});
 delete $opts{tabs};
+
+if (-e $opts{config}) {
+	my $userconfig = LoadFile($opts{config});
+	foreach my $key (keys %$userconfig) {
+		$userconfig->{$key}->{results} = eval $userconfig->{$key}->{results}
+			if $userconfig->{$key}->{results};
+	}
+	%config = %{ merge($userconfig, \%config) };
+}
+
+if (-d $opts{configdir}) {
+	foreach my $file (io($opts{configdir})->all_files) {
+		my $conf = LoadFile($file);
+		my $key  = delete $conf->{key} || $file->filename;
+		$conf->{results} = eval $conf->{results}
+			if $conf->{results};
+		$config{$key} = $conf;
+	}
+}
 
 if ($opts{providers}) {
 	say sprintf("%-10s", $_), $config{$_}{url} foreach keys %config;
@@ -133,7 +204,7 @@ my $query = join ' ', @ARGV;
 my $mconf = $config{ first { ($method =~ /^($_)$/) } keys %config };
 die "Unknown method '$method'" unless $mconf;
 
-my @urls = make_url($mconf, \%opts);
+my @urls = make_url($mconf, $query, \%opts);
 
 if ($mconf->{post}) {
 	my $post < io($opts{post} || '-');
@@ -176,7 +247,7 @@ if (defined $opts{dump}) {
 }
 
 sub make_url { 
-	my ($mconf, $opts) = @_;
+	my ($mconf, $query, $opts) = @_;
 	my $url = URI->new($mconf->{url});
 	my $numresults = $opts->{num};
 	my %params;
@@ -217,6 +288,7 @@ sub post {
 
 sub scrape_page {
 	my ($mconf, $url, $html, $num) = @_;
+	return $url unless $mconf->{results};
 	my $res = $mconf->{results}->scrape($html, $url);
 	return $url unless $res->{''};
 	my @defined = grep {$_} @{$res->{''}};
