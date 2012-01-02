@@ -186,8 +186,8 @@ my %config = (
 		}},
 	},
 	'man|m' => {
-		url => 'http://www.linuxmanpages.com/search.php',
-		params => {term => '$query', submitted => 1, submit => 'Get Man Page', section => -1},
+		url => 'http://man.he.net/',
+		params => {topic => '$query', section => 'all'},
 	},
 	'localman|lman|lm' => {
 		url => 'http://localhost/cgi-bin/man/man2html',
