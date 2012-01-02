@@ -51,13 +51,7 @@ See `psr -h` and `man psr` for complete documentation. Some examples:
 Todos and Ideas
 ---------------
 
-- Add support for a config file, especially to configure the browser command and to add new searches.
-
 - Get more use out of [Web::Scraper](http://search.cpan.org/~miyagawa/Web-Scraper/lib/Web/Scraper.pm) and the scraping code coming with searches. 
 
   - Add title and/or descriptions of search results to output.
   - etc.
-
-- Allow using stdin and POST method to support pastbins or github markdown preview.
-
-- Document how to define searches.
