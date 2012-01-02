@@ -70,11 +70,11 @@ read web page from FILE instead of web
 
 =item C<-c, --config=FILE>
 
-read config file FILE with more search providers [~/.psrrc]
+read config file FILE with more providers [~/.psrrc]
 
 =item C<--configdir=DIR>
 
-read config files in directory DIR with more search providers [~/.psr]
+read config files in directory DIR with more providers [~/.psr]
 
 =back
 
@@ -97,7 +97,7 @@ YAML hash with one hash value per additional provider under the
 provider name as key. The files in ~/.psr should contain a YAML hash
 with the additional provider.
 
-A search provider config hash can contain the following keys:
+A provider config hash can contain the following keys:
 
 =over 4
 
@@ -113,8 +113,8 @@ the query and the number of results.
 
 =item results
 
-This is a bit of perl code to generate a L<Web::Scraper> object to
-scrape the results from the returned html page.
+Some perl code to generate a L<Web::Scraper> object to scrape the
+results from the returned html page.
 
 =item key (only in ~/.psr)
 
