@@ -8,23 +8,75 @@ psr - perl surfraw
 
 psr [options] [provider] [query]
 
- Options:
-  -h, --help            show brief help message
-  --man                 show complete man page
-  -f, --first, --lucky  open first result (same as --open 1)
-  -a, --all             open all results (same as --open 1-)
-  -o, --open=RANGES     open this results (example "1-4,5,9-")
-  -u, --url             print url(s) instead of opening browser
-  -n, --num=NUM         number of results to get
-  -l, --list            list results (same as --all --url)
-  -p, --providers       list known providers
-  --browser=CMD         use CMD to open a new browser
-  -t, --tabs            open all urls with one browser command 
-  -w, --windows         open each url with seperate browser command
-  -d, --dump            dump page to stdout
-  -r, --read=FILE       read web page from FILE instead of web
-  -c, --config=FILE     read config file FILE with more search providers [~/.psrrc]
-  --configdir=DIR       read config files in directory DIR with more search providers [~/.psr]
+=head1 OPTIONS
+
+=over 4
+
+=item C<-h, --help>
+
+show brief help message
+
+=item C<--man>
+
+show complete man page
+
+=item C<-f, --first, --lucky>
+
+open first result (same as --open 1)
+
+=item C<-a, --all>
+
+open all results (same as --open 1-)
+
+=item C<-o, --open=RANGES>
+
+open this results (example "1-4,5,9-")
+
+=item C<-u, --url>
+
+print url(s) instead of opening browser
+
+=item C<-n, --num=NUM>
+
+number of results to get
+
+=item C<-l, --list>
+
+list results (same as --all --url)
+
+=item C<-p, --providers>
+
+list known providers
+
+=item C<--browser=CMD>
+
+use CMD to open a new browser
+
+=item C<-t, --tabs>
+
+open all urls with one browser command
+
+=item C<-w, --windows>
+
+open each url with seperate browser command
+
+=item C<-d, --dump>
+
+dump page to stdout
+
+=item C<-r, --read=FILE>
+
+read web page from FILE instead of web
+
+=item C<-c, --config=FILE>
+
+read config file FILE with more search providers [~/.psrrc]
+
+=item C<--configdir=DIR>
+
+read config files in directory DIR with more search providers [~/.psr]
+
+=back
 
 =head1 DESCRIPTION
 
