@@ -25,7 +25,9 @@ If you want to install psr manually you can use the following commands:
 Usage
 -----
 
-See `psr -h` and `man psr` for complete documentation. Some examples:
+See the
+[manpage](https://github.com/xabbu42/psr/blob/master/Manpage.md) for
+complete documentation. Some examples:
 
     $ psr -l google test
     http://www.test.com/
