@@ -136,7 +136,7 @@ of urls, one url for each search result.
 
 The key of the provider (the filename is used as default). This can be
 a regular expression like C<google|g> if different arguments
-should match this provider. 
+should match this provider.
 
 =back
 
@@ -195,9 +195,13 @@ my %config = (
 		results => scraper {process 'ul > li > a', '[]' => '@href'},
 	},
 	'cpan|c' => {
-		url => 'http://search.cpan.org/search?mode=all&query=$query',
+		url => 'http://search.cpan.org/search?mode=all',
 		params => {query => '$query', pagesize => '$numresults'},
 		results => scraper {process 'h2 > a', '[]' => '@href'},
+	},
+	'php' => {
+		url => 'http://php.net/$query',
+		results => scraper {process  '#quickref_functions li a', '[]' => '@href'},
 	},
 	'dwww|d' => {
 		url => 'http://localhost/cgi-bin/dwww',
@@ -332,16 +336,21 @@ if (defined $opts{dump}) {
 	}
 }
 
-sub make_url { 
+sub eval_string {
+	my ($string, $mconf, $query, $opts) = @_;
+	no warnings 'uninitialized';
+	return eval '"' . $string . '"';
+}
+
+sub make_url {
 	my ($mconf, $query, $opts) = @_;
-	my $url = URI->new($mconf->{url});
+	my $url = URI->new(eval_string($mconf->{url}, $mconf, $query, $opts));
 
 	#generate hash of parameter strings
 	my $numresults = $opts->{num};
 	my %params;
 	foreach my $key (keys %{$mconf->{params}}) {
-		no warnings 'uninitialized';
-		my $val = eval '"' . $mconf->{params}{$key} . '"';
+		my $val = eval_string($mconf->{params}{$key}, $mconf, $query, $opts);
 		$params{$key} = $val if $val;
 	}
 
