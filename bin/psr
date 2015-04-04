@@ -268,7 +268,8 @@ if (-d $opts{configdir}) {
 }
 
 if ($opts{providers}) {
-	say sprintf("%-10s", $_), $config{$_}{url} foreach keys %config;
+	my $len = max(map {length $_} keys %config);
+	say sprintf("%-" . ($len + 2) . "s", $_), $config{$_}{url} foreach keys %config;
 	exit(0);
 }
 
